@@ -1,0 +1,242 @@
+// Prisma schema for Molia Strategy - Finance + Social + Games Platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions         Session[]
+  transactions     Transaction[]
+  categories       Category[]
+  budgets          Budget[]
+  notifications    Notification[]
+  loginAttempts    LoginAttempt[]
+  friendsAsUser    Friend[]        @relation("UserFriends")
+  friendsAsFriend  Friend[]        @relation("FriendUsers")
+  sentRequests     FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  sentMessages     Message[]       @relation("SentMessages")
+  receivedMessages Message[]       @relation("ReceivedMessages")
+  gameSessionsP1   GameSession[]   @relation("Player1")
+  gameSessionsP2   GameSession[]   @relation("Player2")
+  wonGames         GameSession[]   @relation("WonGames")
+  gameMoves        GameMove[]
+  xpRecords        XP[]
+  achievements     UserAchievement[]
+  streak           Streak?
+
+  @@index([username])
+}
+
+model Session {
+  id         String    @id @default(uuid())
+  userId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  deviceInfo String?
+  ipAddress  String?
+
+  @@index([userId])
+}
+
+model Transaction {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        String    // "EXPENSE" or "INCOME"
+  amount      Float
+  categoryId  String?
+  category    Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  title       String
+  description String?
+  date        DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, date])
+  @@index([userId, type])
+}
+
+model Category {
+  id           String        @id @default(uuid())
+  userId       String?       // null for default/system categories, userId for user-defined
+  user         User?         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  icon         String
+  type         String        // "EXPENSE" or "INCOME"
+  transactions Transaction[]
+
+  @@index([userId])
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Float
+  month     Int
+  year      Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, month, year])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // "BUDGET_WARNING", "BUDGET_EXCEEDED", "LOGIN", "FRIEND_REQUEST", "GAME_INVITE", "ACHIEVEMENT"
+  title     String
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
+}
+
+model LoginAttempt {
+  id         String   @id @default(uuid())
+  username   String
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  success    Boolean
+  ipAddress  String?
+  userAgent  String?
+  deviceInfo String?
+  createdAt  DateTime @default(now())
+
+  @@index([username])
+  @@index([createdAt])
+}
+
+model Friend {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friendId  String
+  friend    User     @relation("FriendUsers", fields: [friendId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, friendId])
+  @@index([userId])
+  @@index([friendId])
+}
+
+model FriendRequest {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+  status     String   @default("PENDING") // "PENDING", "ACCEPTED", "REJECTED"
+  createdAt  DateTime @default(now())
+
+  @@index([receiverId, status])
+  @@index([senderId])
+}
+
+model Message {
+  id         String   @id @default(uuid())
+  senderId   String
+  sender     User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId String
+  receiver   User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  message    String
+  read       Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, read])
+}
+
+model GameSession {
+  id          String     @id @default(uuid())
+  gameType    String     // "TIC_TAC_TOE", "QUIZ", "CHECKERS"
+  player1Id   String
+  player1     User       @relation("Player1", fields: [player1Id], references: [id], onDelete: Cascade)
+  player2Id   String?
+  player2     User?      @relation("Player2", fields: [player2Id], references: [id], onDelete: SetNull)
+  status      String     @default("WAITING") // "WAITING", "IN_PROGRESS", "COMPLETED", "DRAW"
+  winnerId    String?
+  winner      User?      @relation("WonGames", fields: [winnerId], references: [id], onDelete: SetNull)
+  gameState   String     // JSON state of board / quiz
+  currentTurn String?    // player1Id or player2Id
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  moves       GameMove[]
+
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([status])
+}
+
+model GameMove {
+  id        String      @id @default(uuid())
+  gameId    String
+  game      GameSession @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  playerId  String
+  player    User        @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  moveData  String      // JSON string representation
+  moveIndex Int
+  createdAt DateTime    @default(now())
+
+  @@index([gameId, moveIndex])
+}
+
+model XP {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  amount    Int
+  reason    String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+}
+
+model Achievement {
+  id          String            @id @default(uuid())
+  code        String            @unique
+  name        String
+  description String
+  icon        String
+  requirement String
+  xpReward    Int               @default(50)
+  users       UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(uuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+  unlockedAt    DateTime    @default(now())
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model Streak {
+  id             String    @id @default(uuid())
+  userId         String    @unique
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentStreak  Int       @default(0)
+  longestStreak  Int       @default(0)
+  lastActiveDate DateTime?
+}
