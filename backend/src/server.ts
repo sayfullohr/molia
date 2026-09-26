@@ -90,6 +90,9 @@ process.on('SIGTERM', async () => {
   process.exit(0);
 });
 
-startServer();
+if (!process.env.VERCEL) {
+  startServer();
+}
 
 export default app;
+module.exports = app;

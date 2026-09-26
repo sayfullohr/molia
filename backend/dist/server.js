@@ -77,5 +77,8 @@ process.on('SIGTERM', async () => {
     await prisma_1.prisma.$disconnect();
     process.exit(0);
 });
-startServer();
+if (!process.env.VERCEL) {
+    startServer();
+}
 exports.default = app;
+module.exports = app;
