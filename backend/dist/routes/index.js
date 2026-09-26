@@ -1,0 +1,26 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_routes_1 = __importDefault(require("./auth.routes"));
+const transaction_routes_1 = __importDefault(require("./transaction.routes"));
+const finance_routes_1 = require("./finance.routes");
+const social_routes_1 = require("./social.routes");
+const game_routes_1 = __importDefault(require("./game.routes"));
+const system_routes_1 = require("./system.routes");
+const apiRouter = (0, express_1.Router)();
+apiRouter.use('/auth', auth_routes_1.default);
+apiRouter.use('/transactions', transaction_routes_1.default);
+apiRouter.use('/categories', finance_routes_1.categoryRouter);
+apiRouter.use('/budget', finance_routes_1.budgetRouter);
+apiRouter.use('/statistics', finance_routes_1.statisticsRouter);
+apiRouter.use('/friends', social_routes_1.friendRouter);
+apiRouter.use('/messages', social_routes_1.messageRouter);
+apiRouter.use('/games', game_routes_1.default);
+apiRouter.use('/gamification', system_routes_1.gamificationRouter);
+apiRouter.use('/notifications', system_routes_1.notificationRouter);
+apiRouter.use('/security', system_routes_1.securityRouter);
+apiRouter.use('/export', system_routes_1.exportRouter);
+exports.default = apiRouter;

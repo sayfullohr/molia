@@ -1,0 +1,16 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const transaction_controller_1 = require("../controllers/transaction.controller");
+const auth_1 = require("../middleware/auth");
+const validate_1 = require("../middleware/validate");
+const transaction_validator_1 = require("../validators/transaction.validator");
+const router = (0, express_1.Router)();
+router.use(auth_1.requireAuth);
+router.get('/', (0, validate_1.validate)(transaction_validator_1.queryTransactionSchema), (req, res, next) => transaction_controller_1.transactionController.getTransactions(req, res, next));
+router.get('/dashboard', (req, res, next) => transaction_controller_1.transactionController.getDashboard(req, res, next));
+router.post('/', (0, validate_1.validate)(transaction_validator_1.createTransactionSchema), (req, res, next) => transaction_controller_1.transactionController.create(req, res, next));
+router.post('/smart-parse', (req, res, next) => transaction_controller_1.transactionController.smartParse(req, res, next));
+router.patch('/:id', (0, validate_1.validate)(transaction_validator_1.updateTransactionSchema), (req, res, next) => transaction_controller_1.transactionController.update(req, res, next));
+router.delete('/:id', (req, res, next) => transaction_controller_1.transactionController.remove(req, res, next));
+exports.default = router;

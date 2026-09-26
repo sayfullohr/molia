@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const game_controller_1 = require("../controllers/game.controller");
+const auth_1 = require("../middleware/auth");
+const validate_1 = require("../middleware/validate");
+const common_validator_1 = require("../validators/common.validator");
+const router = (0, express_1.Router)();
+router.use(auth_1.requireAuth);
+router.post('/heartbeat', (req, res, next) => game_controller_1.gameController.heartbeat(req, res, next));
+router.get('/pending-invite', (req, res, next) => game_controller_1.gameController.getPendingInvite(req, res, next));
+router.post('/', (0, validate_1.validate)(common_validator_1.createGameSchema), (req, res, next) => game_controller_1.gameController.createGame(req, res, next));
+router.get('/:id', (req, res, next) => game_controller_1.gameController.getGame(req, res, next));
+router.post('/:id/join', (req, res, next) => game_controller_1.gameController.joinGame(req, res, next));
+router.post('/:id/move', (0, validate_1.validate)(common_validator_1.gameMoveSchema), (req, res, next) => game_controller_1.gameController.makeMove(req, res, next));
+router.post('/:id/rematch', (req, res, next) => game_controller_1.gameController.rematch(req, res, next));
+exports.default = router;
