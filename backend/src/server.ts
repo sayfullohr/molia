@@ -22,7 +22,7 @@ app.use(
 // 2. CORS configuration (allowing frontend credentials & HttpOnly cookies)
 app.use(
   cors({
-    origin: config.frontendUrl,
+    origin: true,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],

@@ -1,8 +1,8 @@
 // Prisma schema for Molia Strategy - Finance + Social + Games Platform
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../backend/node_modules/@prisma/client"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
 datasource db {
